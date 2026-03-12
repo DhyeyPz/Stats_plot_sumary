@@ -1,0 +1,6 @@
+version 1.0.0 :
+                Features included :-
+                  1. Reads outb files and processes them. Added outb reader
+                  2. Note: the files uploaded should have the all the same sensors
+                  3. At the movement cannot processes both out and outb together.
+                  4. Changed 'handleCalculateData' function in Test5.jsx a bit
