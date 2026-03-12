@@ -1,0 +1,25 @@
+
+src/
+├─ components/
+│  ├─ FilePanel.jsx
+│  ├─ FormatDropDown.jsx
+│  ├─ NavBar.jsx
+│  ├─ ParameterPanel.jsx
+│  └─ StatsPanel.jsx
+├─ utils/
+│  ├─ power-curve/
+│  │  ├─ GenarateFWContent.js
+│  │  ├─ generateCSV.js
+│  │  └─ generatxlsx.js
+│  ├─ constants.jsx
+│  ├─ exporting.jsx
+│  ├─ fileParsing.jsx
+│  ├─ mathLogic.jsx
+│  └─ rainflowLogic.jsx
+├─ App.css
+├─ App.jsx
+├─ AppTest.css
+├─ code_structure.txt
+├─ index.css
+├─ main.jsx
+└─ Test5.jsx

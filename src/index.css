@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/* 1. Global Reset for the whole page */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #3f3f46; /* zinc-700 */
+  border-radius: 9999px;
+  border: 2px solid transparent; /* Creates padding effect */
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #52525b; /* zinc-600 */
+}
+
+/* 2. Specific Utility Class for your Panels (Forces the look) */
+@layer utilities {
+  .custom-scrollbar {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #3f3f46 transparent; /* Firefox */
+  }
+
+  /* Webkit support for the utility class */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px; /* Slimmer width */
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px 0; /* Tiny margin at top/bottom */
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #3f3f46; /* Dark grey */
+    border-radius: 20px;
+    border: none; /* No border for the clean look */
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #10b981; /* Emerald green on hover */
+  }
+}
