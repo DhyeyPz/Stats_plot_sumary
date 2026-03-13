@@ -4,6 +4,8 @@ export class OutbReader {
     this.headerParsed = false;
     this.channelNames = [];
     this.channelUnits = [];
+
+    this.cachedBuffer = null;
   }
 
   async readHeader() {
@@ -59,30 +61,49 @@ export class OutbReader {
     };
   }
 
-  async getChannelData(channelName) {
+async getChannelData(channelName) {
     await this.readHeader();
-    // Now searching works because both sides are trimmed
     const channelIndex = this.channelNames.indexOf(channelName.trim());
-    if (channelIndex === -1) throw new Error(`Channel ${channelName} not found`);
+    
+    // 👇 FIX: Do NOT throw an error. Return null gracefully so the app continues.
+    if (channelIndex === -1) {
+       console.warn(`Channel ${channelName} not found in ${this.file.name}`);
+       return { y: null }; 
+    }
 
+    // 👇 ADDED THIS CACHING BLOCK
+    if (!this.cachedBuffer) {
+      this.cachedBuffer = await this.file.arrayBuffer();
+    }
+
+    // DATA EXTRACTION LOGIC using this.cachedBuffer
     const x = new Float64Array(this.NT);
     const y = new Float64Array(this.NT);
     const bytesPerRow = this.numOutChans * 2;
 
     if (channelIndex === 0) {
-      for (let i = 0; i < this.NT; i++) x[i] = y[i] = this.timeStart + i * this.timeIncr;
+      for (let i = 0; i < this.NT; i++) {
+        x[i] = y[i] = this.timeStart + i * this.timeIncr;
+      }
       return { x, y };
     }
 
     const dataIndex = channelIndex - 1;
-    const buffer = await this.file.slice(this.dataStartOffset, this.dataStartOffset + (this.NT * bytesPerRow)).arrayBuffer();
-    const view = new DataView(buffer);
+    // Use the cached buffer directly
+    const view = new DataView(this.cachedBuffer);
 
     for (let i = 0; i < this.NT; i++) {
       x[i] = this.timeStart + i * this.timeIncr;
-      const packed = view.getInt16((i * bytesPerRow) + (dataIndex * 2), true);
+      
+      // IMPORTANT: We now add dataStartOffset because we are viewing the WHOLE buffer
+      const offset = this.dataStartOffset + (i * bytesPerRow) + (dataIndex * 2);
+      
+      const packed = view.getInt16(offset, true);
       y[i] = (packed - this.colOff[dataIndex]) / this.colScl[dataIndex];
     }
+
     return { x, y };
-  }
+}
+
+
 }
