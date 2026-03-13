@@ -8,25 +8,7 @@ import { ProtectedRoute } from "./utils/ProtectedRoute";
 import ChangePassword from "./pages/ChangePassword";
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        {/* PUBLIC ROUTE */}
-        <Route path="/auth/signin" element={<SignIn />} />
-
-        {/* PROTECTED ROUTES */}
-        <Route
-          path="/change-password"
-          element={
-            <ProtectedRoute>
-              <ChangePassword />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
+      
               <div>
                 {/* this is the test branch  */}
                 {/* <Plot /> */}
@@ -39,10 +21,7 @@ export default function App() {
                 {/* <Test4 /> */}
                 <Test5 />
               </div>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </Router>
+          
+        
   );
 }
