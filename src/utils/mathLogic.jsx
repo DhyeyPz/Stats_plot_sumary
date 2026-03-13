@@ -80,27 +80,105 @@ export const calculateStdDev = (data, mean) => {
   return Math.sqrt(sqDiffs / (data.length - 1));
 };
 
-export const calculateGroupStat = (filesData, statName, column, avgMethod) => {
-  let values = [];
-  filesData.forEach((data) => {
-    const stats = data[column];
-    if (!stats) return;
+// export const calculateGroupStat = (filesData, statName, column, avgMethod) => {
 
-    let val = statName.includes("1Hz DEL") ? stats[statName] :
-              (statName === "Standard Deviation") ? (stats.StdDev ?? stats.stdDev ?? stats["Standard Deviation"]) :
-              (stats[statName] ?? stats[statName.toLowerCase()]);
+//   let values = [];
+//   filesData.forEach((data) => {
+//     const stats = data[column];
+//     if (!stats) return;
 
-    if (val !== undefined && val !== "N/A" && val !== null) {
-      const num = typeof val === "number" ? val : parseFloat(val);
-      if (!isNaN(num)) values.push(num);
-    }
-  });
+//     let val = statName.includes("1Hz DEL") ? stats[statName] :
+//               (statName === "Standard Deviation") ? (stats.StdDev ?? stats.stdDev ?? stats["Standard Deviation"]) :
+//               (stats[statName] ?? stats[statName.toLowerCase()]);
 
-  if (values.length === 0) return "N/A";
-  if (avgMethod === 3) {
-    let maxAbs = -1, result = 0;
-    values.forEach(v => { if (Math.abs(v) > maxAbs) { maxAbs = Math.abs(v); result = v; } });
-    return result;
-  }
-  return values.reduce((a, b) => a + b, 0) / values.length;
+//     if (val !== undefined && val !== "N/A" && val !== null) {
+//       const num = typeof val === "number" ? val : parseFloat(val);
+//       if (!isNaN(num)) values.push(num);
+//     }
+//   });
+
+//   if (values.length === 0) return "N/A";
+//   if (avgMethod === 3) {
+//     let maxAbs = -1, result = 0;
+//     values.forEach(v => { if (Math.abs(v) > maxAbs) { maxAbs = Math.abs(v); result = v; } });
+//     return result;
+//   }
+//   return values.reduce((a, b) => a + b, 0) / values.length;
+// };
+
+// export const calculateGroupStat = (filesData, columnName, statName) => {
+//   if (!filesData || filesData.length === 0) return 0;
+
+//   // Map common stat names to handle case sensitivity
+//   const statMap = {
+//     'mean': ['mean', 'Mean'],
+//     'max': ['max', 'Max'],
+//     'min': ['min', 'Min'],
+//     'stdDev': ['stdDev', 'Standard Deviation', 'StdDev'],
+//     'del4': ['del4', '1Hz DEL (m=4)', 'm4'],
+//     'del8': ['del8', '1Hz DEL (m=8)', 'm8'],
+//     'del10': ['del10', '1Hz DEL (m=10)', 'm10']
+//   };
+
+//   const possibleKeys = statMap[statName] || [statName];
+  
+//   let sum = 0;
+//   let validFiles = 0;
+
+//   filesData.forEach(fileData => {
+//     const colData = fileData[columnName];
+//     if (colData) {
+//       // Find the first key that exists in the data
+//       const key = possibleKeys.find(k => k in colData);
+//       const val = key ? colData[key] : null;
+      
+//       if (val !== null && val !== undefined && val !== "N/A" && !isNaN(val)) {
+//         sum += parseFloat(val);
+//         validFiles++;
+//       }
+//     }
+//   });
+
+//   return validFiles > 0 ? sum / validFiles : 0;
+// };
+// src/utils/mathLogic.js
+
+export const calculateGroupStat = (filesData, columnName, statName) => {
+    if (!filesData || filesData.length === 0) return 0;
+
+    // Map UI labels to all possible stored keys
+    const keyMap = {
+        'Mean': ['Mean', 'mean'],
+        'Max': ['Max', 'max'],
+        'Min': ['Min', 'min'],
+        'Standard Deviation': ['Standard Deviation', 'stdDev'],
+        'Range': ['Range', 'range'],
+        '1Hz DEL (m=4)': ['1Hz DEL (m=4)', 'del4'],
+        '1Hz DEL (m=8)': ['1Hz DEL (m=8)', 'del8'],
+        '1Hz DEL (m=10)': ['1Hz DEL (m=10)', 'del10']
+    };
+
+    const targetKeys = keyMap[statName] || [statName];
+    let totalSum = 0;
+    let count = 0;
+
+    filesData.forEach(fileStats => {
+        const sensorData = fileStats[columnName];
+        if (sensorData) {
+            // Find which key exists in the data object
+            const actualKey = targetKeys.find(k => k in sensorData);
+            const value = actualKey ? sensorData[actualKey] : null;
+
+            // Only aggregate if it's a valid number and not "N/A"
+            if (value !== null && value !== undefined && value !== "N/A") {
+                const num = parseFloat(value);
+                if (!isNaN(num)) {
+                    totalSum += num;
+                    count++;
+                }
+            }
+        }
+    });
+
+    return count > 0 ? totalSum / count : 0;
 };

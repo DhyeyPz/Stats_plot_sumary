@@ -427,85 +427,206 @@ export default function Test5() {
     setSelectedColumns(sortedHeaders);
     setIsScanning(false);
   };
-  const handleCalculateData = async () => {
-    setIsCalculating(true);
-    const newMinMaxData = {};
+//   const handleCalculateData = async () => {
+//     setIsCalculating(true);
+//     const newMinMaxData = {};
 
-    for (const file of uploadedFiles.filter(f => selectedFilesForCalculation.includes(f.name))) {
-      let fileStats = {};
+//     for (const file of uploadedFiles.filter(f => selectedFilesForCalculation.includes(f.name))) {
+//       let fileStats = {};
 
-      if (file.name.toLowerCase().endsWith(".outb")) {
-        const reader = new OutbReader(file);
-        await reader.readHeader();
-        for (const col of selectedColumns) {
-          // const { y } = await reader.getChannelData(col);
-          // const data = Array.from(y);
-          // const mean = data.reduce((a, b) => a + b, 0) / data.length;
+//       if (file.name.toLowerCase().endsWith(".outb")) {
+//         const reader = new OutbReader(file);
+//         await reader.readHeader();
+//         for (const col of selectedColumns) {
+//           // const { y } = await reader.getChannelData(col);
+//           // const data = Array.from(y);
+//           // const mean = data.reduce((a, b) => a + b, 0) / data.length;
 
-          // let dels = { m4: "N/A", m8: "N/A", m10: "N/A" };
-          // if (selectedStats.includes("1Hz DEL")) {
-          //   const cycles = rainflowCounting(hysteresisFilter(data, 0));
-          //   dels = calculateDELs(cycles);
-          // }
+//           // let dels = { m4: "N/A", m8: "N/A", m10: "N/A" };
+//           // if (selectedStats.includes("1Hz DEL")) {
+//           //   const cycles = rainflowCounting(hysteresisFilter(data, 0));
+//           //   dels = calculateDELs(cycles);
+//           // }
 
-          // fileStats[col] = {
-          //   Min: Math.min(...data), Max: Math.max(...data), Mean: mean,
-          //   Range: Math.max(...data) - Math.min(...data),
-          //   "Standard Deviation": calculateStdDev(data, mean),
-          //   "1Hz DEL (m=4)": dels.m4, "1Hz DEL (m=8)": dels.m8, "1Hz DEL (m=10)": dels.m10
-          // };
+//           // fileStats[col] = {
+//           //   Min: Math.min(...data), Max: Math.max(...data), Mean: mean,
+//           //   Range: Math.max(...data) - Math.min(...data),
+//           //   "Standard Deviation": calculateStdDev(data, mean),
+//           //   "1Hz DEL (m=4)": dels.m4, "1Hz DEL (m=8)": dels.m8, "1Hz DEL (m=10)": dels.m10
+//           // };
 
           
-const { y } = await reader.getChannelData(col);
-const data = y instanceof Float64Array || y instanceof Float32Array ? y : Array.from(y);
+// const { y } = await reader.getChannelData(col);
 
-// Single-pass calculation for Min, Max, and Mean to save memory
-let min = Infinity;
-let max = -Infinity;
-let sum = 0;
+// // 👇 CRITICAL FIX: Never use Array.from() for binary data! Wrap it in Float32Array
+// const data = (y instanceof Float64Array || y instanceof Float32Array) ? y : new Float32Array(y);
 
-for (let i = 0; i < data.length; i++) {
-  const val = data[i];
-  if (val < min) min = val;
-  if (val > max) max = val;
-  sum += val;
-}
+// // 👇 SINGLE-PASS ROCKET SPEED CALCULATION
+// let min = Infinity;
+// let max = -Infinity;
+// let sum = 0;
+// let sumSq = 0; // Calculate square sum in the same loop to avoid looping twice!
 
-const mean = sum / data.length;
+// for (let i = 0; i < data.length; i++) {
+//   const val = data[i];
+//   if (val < min) min = val;
+//   if (val > max) max = val;
+//   sum += val;
+//   sumSq += val * val; 
+// }
 
-let dels = { m4: "N/A", m8: "N/A", m10: "N/A" };
-if (selectedStats.includes("1Hz DEL")) {
-  const cycles = rainflowCounting(hysteresisFilter(data, 0));
-  dels = calculateDELs(cycles);
-}
+// const mean = sum / data.length;
 
-fileStats[col] = {
-  Min: min,
-  Max: max,
-  Mean: mean,
-  Range: max - min,
-  "Standard Deviation": calculateStdDev(data, mean),
-  "1Hz DEL (m=4)": dels.m4,
-  "1Hz DEL (m=8)": dels.m8,
-  "1Hz DEL (m=10)": dels.m10
+// // Instant Standard Deviation (Zero extra loops)
+// let stdDev = 0;
+// if (data.length > 1) {
+//   stdDev = Math.sqrt((sumSq - (sum * sum) / data.length) / (data.length - 1));
+// }
+
+// let dels = { m4: "N/A", m8: "N/A", m10: "N/A" };
+// if (selectedStats.includes("1Hz DEL")) {
+//   // Passing the raw Float32Array 'data' directly to Rainflow
+//   const cycles = rainflowCounting(hysteresisFilter(data, 0));
+//   dels = calculateDELs(cycles);
+// }
+
+// fileStats[col] = { 
+//   Min: min, 
+//   Max: max, 
+//   Mean: mean, 
+//   Range: max - min, 
+//   "Standard Deviation": stdDev, // Uses the instant result
+//   "1Hz DEL (m=4)": dels.m4, 
+//   "1Hz DEL (m=8)": dels.m8, 
+//   "1Hz DEL (m=10)": dels.m10 
+// };
+
+//         }
+
+
+
+
+//       } else {
+//         const headerChunk = await file.slice(0, 50000).text();
+//         const { headers } = parseHeaderAndUnits(headerChunk.split(/\r?\n/));
+//         fileStats = await calculateStatsInChunks(file, selectedColumns, Object.fromEntries(headers.map((h, i) => [h, i])), selectedStats);
+//       }
+//       newMinMaxData[file.name] = fileStats;
+//     }
+//     setMinMaxDataAllFiles(newMinMaxData);
+//     setIsCalculating(false);
+//   };
+  
+const handleCalculateData = async () => {
+  setIsCalculating(true);
+  const newMinMaxData = {};
+
+  for (const file of uploadedFiles.filter(f => selectedFilesForCalculation.includes(f.name))) {
+    let fileStats = {};
+
+    if (file.name.toLowerCase().endsWith(".outb")) {
+      const reader = new OutbReader(file);
+      await reader.readHeader();
+
+      for (const col of selectedColumns) {
+        const cleanColName = col.trim(); // Trim column name once for consistency
+
+        try {
+          const result = await reader.getChannelData(col);
+          const y_data = result ? result.y : null;
+
+          if (!y_data || y_data.length === 0) {
+            throw new Error(`Channel missing`);
+          }
+
+          // Force strict float processing
+          const data = (y_data instanceof Float64Array || y_data instanceof Float32Array)
+            ? y_data
+            : Float32Array.from(y_data, val => parseFloat(val));
+
+          let min = Infinity;
+          let max = -Infinity;
+          let sum = 0;
+          let sumSq = 0;
+          let validCount = 0;
+
+          for (let i = 0; i < data.length; i++) {
+            const val = data[i];
+            if (!isNaN(val)) {
+              if (val < min) min = val;
+              if (val > max) max = val;
+              sum += val;
+              sumSq += val * val;
+              validCount++;
+            }
+          }
+
+          if (validCount === 0) throw new Error("No valid numeric data");
+
+          const mean = sum / validCount;
+          let stdDev = validCount > 1 
+            ? Math.sqrt(Math.max(0, (sumSq - (sum * sum) / validCount) / (validCount - 1))) 
+            : 0;
+
+          let dels = { m4: "N/A", m8: "N/A", m10: "N/A" };
+          if (selectedStats.includes("1Hz DEL")) {
+            const cycles = rainflowCounting(hysteresisFilter(data, 0));
+            dels = calculateDELs(cycles);
+          }
+
+          // Combined Assignment: Uppercase for Export/UI, Lowercase for Power Curve
+          fileStats[cleanColName] = {
+            // UI and Export Keys
+            "Mean": mean,
+            "Max": max,
+            "Min": min,
+            "Standard Deviation": stdDev,
+            "Range": max - min,
+            "1Hz DEL (m=4)": dels.m4,
+            "1Hz DEL (m=8)": dels.m8,
+            "1Hz DEL (m=10)": dels.m10,
+
+            // Power Curve Logic Keys
+            "mean": mean,
+            "max": max,
+            "min": min,
+            "stdDev": stdDev,
+            "range": max - min,
+            "del4": dels.m4,
+            "del8": dels.m8,
+            "del10": dels.m10,
+            "count": validCount
+          };
+
+        } catch (error) {
+          console.warn(`Skipping column ${col} for file: ${error.message}`);
+          fileStats[cleanColName] = {
+            "Mean": "N/A", "Max": "N/A", "Min": "N/A",
+            "Standard Deviation": "N/A", "Range": "N/A",
+            "1Hz DEL (m=4)": "N/A", "1Hz DEL (m=8)": "N/A", "1Hz DEL (m=10)": "N/A",
+            "mean": "N/A", "max": "N/A", "min": "N/A", "stdDev": "N/A", "count": 0
+          };
+        }
+      }
+    } else {
+      // Non-outb files (CSV/Text)
+      const headerChunk = await file.slice(0, 50000).text();
+      const { headers } = parseHeaderAndUnits(headerChunk.split(/\r?\n/));
+      fileStats = await calculateStatsInChunks(file, selectedColumns, Object.fromEntries(headers.map((h, i) => [h, i])), selectedStats);
+    }
+    newMinMaxData[file.name] = fileStats;
+  }
+
+  setMinMaxDataAllFiles(newMinMaxData);
+  setIsCalculating(false);
 };
 
-        }
 
 
 
 
-      } else {
-        const headerChunk = await file.slice(0, 50000).text();
-        const { headers } = parseHeaderAndUnits(headerChunk.split(/\r?\n/));
-        fileStats = await calculateStatsInChunks(file, selectedColumns, Object.fromEntries(headers.map((h, i) => [h, i])), selectedStats);
-      }
-      newMinMaxData[file.name] = fileStats;
-    }
-    setMinMaxDataAllFiles(newMinMaxData);
-    setIsCalculating(false);
-  };
-  const handleExportSummary = async () => {
+
+const handleExportSummary = async () => {
     if (
       Object.keys(minMaxDataAllFiles).length === 0 ||
       selectedStats.length === 0 ||
