@@ -4,3 +4,15 @@ version 1.0.0 :
                   2. Note: the files uploaded should have the all the same sensors
                   3. At the movement cannot processes both out and outb together.
                   4. Changed 'handleCalculateData' function in Test5.jsx a bit
+version 1.1.0 :
+                Features included :-
+                  1. Core Data Handling: From Dynamic to Contiguous Memory i.e. 
+                        Old Logic:            Used standard JavaScript arrays ([...]) and dynamic methods like .push()
+                        New Logic:            Uses TypedArrays (Float32Array, Int32Array). These pre-allocate a contiguous block of memory
+                  2. Rainflow & Fatigue: Python-Equivalent Precision
+                        Old Logic:            Basic filtering and counting using standard arrays
+                        New Logic:
+                            Pre-allocation:   Functions like getTurningPoints now pre-allocate the maximum possible size for Float32Array and Int32Array to avoid expensive re-allocations during processing.
+                            Subarrays:        Instead of creating copies of data with .slice(), the code uses .subarray(), which creates a "view" of the existing memory, saving time and space
+                  3. At the movement can processes both out and outb together but there can be duplication i.e. same out and outb can exist together so same data is calculated twice.
+                  4. Added a new function - "safelyGetStat" : Because different file versions might use "mean", "Mean", or "MEAN", the code uses a Mapping Object
