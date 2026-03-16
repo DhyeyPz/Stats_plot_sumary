@@ -16,3 +16,4 @@ version 1.1.0 :
                             Subarrays:        Instead of creating copies of data with .slice(), the code uses .subarray(), which creates a "view" of the existing memory, saving time and space
                   3. At the movement can processes both out and outb together but there can be duplication i.e. same out and outb can exist together so same data is calculated twice.
                   4. Added a new function - "safelyGetStat" : Because different file versions might use "mean", "Mean", or "MEAN", the code uses a Mapping Object
+                  5. For outb reader a cache is added which stores the headers in metadata so no need to read the file header again and things speed up
