@@ -39,3 +39,44 @@ export const getFileMetadata = (fileName) => {
     partialLoadFactor: 1,
   };
 };
+
+
+// Function to filter out .out files if a .outb with the same name exists
+export const filterDuplicateOutFiles = (files) => {
+  const fileMap = new Map();
+
+  // 1. Group files by their base name
+  for (const file of files) {
+    const fileName = file.name;
+    const lastDotIndex = fileName.lastIndexOf(".");
+    
+    // Skip if no extension
+    if (lastDotIndex === -1) continue; 
+
+    const baseName = fileName.substring(0, lastDotIndex);
+    const extension = fileName.substring(lastDotIndex).toLowerCase();
+
+    // Only process allowed extensions just to be safe
+    if (extension !== ".out" && extension !== ".outb") continue;
+
+    if (!fileMap.has(baseName)) {
+      fileMap.set(baseName, {});
+    }
+    
+    // Store the file object under its specific extension
+    fileMap.get(baseName)[extension] = file;
+  }
+
+  const filteredFiles = [];
+
+  // 2. Select .outb over .out
+  for (const [baseName, extensions] of fileMap.entries()) {
+    if (extensions[".outb"]) {
+      filteredFiles.push(extensions[".outb"]); // Prefer .outb if it exists
+    } else if (extensions[".out"]) {
+      filteredFiles.push(extensions[".out"]);  // Fallback to .out
+    }
+  }
+
+  return filteredFiles;
+};

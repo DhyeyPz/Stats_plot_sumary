@@ -4,7 +4,7 @@ import React, { useState } from "react";
 
 // Import logic from utils
 import { AVAILABLE_STATS } from "./utils/constants";
-import { isAllowedFile, parseHeaderAndUnits } from "./utils/fileParsing";
+import { isAllowedFile, parseHeaderAndUnits, filterDuplicateOutFiles } from "./utils/fileParsing";
 import { calculateStatsInChunks } from "./utils/mathLogic";
 import { generateAndExportFiles } from "./utils/exporting";
 import Navbar from "./components/NavBar";
@@ -354,46 +354,99 @@ export default function Test5() {
   };
 
   // NEW DIRECTORY PICKER LOGIC (Replaces Dropzone)
+  // const handleUploadFolderClick = async () => {
+  //   try {
+  //     // 1. Ask user for read/write access to a folder
+  //     const dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+  //     setInputDirHandle(dirHandle);
+
+  //     // 2. Read files directly from the top level of the folder
+  //     const files = [];
+  //     for await (const entry of dirHandle.values()) {
+  //       if (entry.kind === "file" && isAllowedFile(entry.name)) {
+  //         const file = await entry.getFile();
+  //         files.push(file);
+  //       }
+  //     }
+
+  //     const allFileNames = files.map((f) => f.name);
+  //     setUploadedFiles(files);
+  //     setSelectedFilesForCalculation(allFileNames);
+  //     setIsAllFilesSelected(true);
+  //     setAvailableColumns([]);
+  //     setSelectedColumns([]);
+  //     setColumnUnits({});
+  //     setMinMaxDataAllFiles({});
+  //     setSelectedStats(AVAILABLE_STATS);
+  //     setIsAllStatsSelected(true);
+
+  //     if (allFileNames.length > 0) {
+  //       await scanSelectedFilesForParameters(files);
+  //     } else {
+  //       displayMessage("No valid .out files found in the selected folder.");
+  //     }
+  //   } catch (err) {
+  //     if (err.name !== "AbortError") {
+  //       console.error("Folder selection failed:", err);
+  //       displayMessage(
+  //         "Failed to open folder. Ensure your browser supports this feature.",
+  //       );
+  //     }
+  //   }
+  // };
+
   const handleUploadFolderClick = async () => {
-    try {
-      // 1. Ask user for read/write access to a folder
-      const dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-      setInputDirHandle(dirHandle);
+  try {
+    // 1. Ask user for read/write access to a folder [1]
+    const dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+    setInputDirHandle(dirHandle); // [2]
 
-      // 2. Read files directly from the top level of the folder
-      const files = [];
-      for await (const entry of dirHandle.values()) {
-        if (entry.kind === "file" && isAllowedFile(entry.name)) {
-          const file = await entry.getFile();
-          files.push(file);
-        }
-      }
-
-      const allFileNames = files.map((f) => f.name);
-      setUploadedFiles(files);
-      setSelectedFilesForCalculation(allFileNames);
-      setIsAllFilesSelected(true);
-      setAvailableColumns([]);
-      setSelectedColumns([]);
-      setColumnUnits({});
-      setMinMaxDataAllFiles({});
-      setSelectedStats(AVAILABLE_STATS);
-      setIsAllStatsSelected(true);
-
-      if (allFileNames.length > 0) {
-        await scanSelectedFilesForParameters(files);
-      } else {
-        displayMessage("No valid .out files found in the selected folder.");
-      }
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        console.error("Folder selection failed:", err);
-        displayMessage(
-          "Failed to open folder. Ensure your browser supports this feature.",
-        );
+    // 2. Read all allowed files directly from the folder [1, 3]
+    const files = [];
+    for await (const entry of dirHandle.values()) {
+      if (entry.kind === "file" && isAllowedFile(entry.name)) {
+        const file = await entry.getFile();
+        files.push(file);
       }
     }
-  };
+
+    // --- INTEGRATION START: Filter out duplicate .out files ---
+    // This uses the utility you added to fileParsing.jsx
+    const filteredFiles = filterDuplicateOutFiles(files);
+
+    // This is the "allFileNames block" you asked about. 
+    // It now maps from filteredFiles to ensure the UI only shows .outb where applicable.
+    const allFileNames = filteredFiles.map((f) => f.name);
+    // --- INTEGRATION END ---
+
+    // 3. Update application state with the filtered data [4, 5]
+    setUploadedFiles(filteredFiles); 
+    setSelectedFilesForCalculation(allFileNames);
+    setIsAllFilesSelected(true);
+    
+    // Reset selection states for a new folder upload [4, 6]
+    setAvailableColumns([]);
+    setSelectedColumns([]);
+    setColumnUnits({});
+    setMinMaxDataAllFiles({});
+    setSelectedStats(AVAILABLE_STATS); // [7]
+    setIsAllStatsSelected(true);
+
+    // 4. Scan the filtered list for parameters [1, 5]
+    if (allFileNames.length > 0) {
+      await scanSelectedFilesForParameters(filteredFiles);
+    } else {
+      displayMessage("No valid .out or .outb files found in the selected folder.");
+    }
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      console.error("Folder selection failed:", err);
+      displayMessage(
+        "Failed to open folder. Ensure your browser supports this feature."
+      );
+    }
+  }
+};
 
   const scanSelectedFilesForParameters = async (files) => {
     setIsScanning(true);
